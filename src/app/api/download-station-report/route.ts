@@ -33,14 +33,23 @@ export async function POST(request: Request) {
         'Content-Disposition': contentDisposition || `attachment; filename="station_report.xlsx"`,
       },
     });
-  } catch (error) {
-    console.error('❌ Station report API route error:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to generate station report',
-        details: error.message 
-      }, 
-      { status: 500 }
-    );
-  }
+  } catch (err: unknown) {
+  // Optional: log the raw error for observability
+  console.error("download-station-report failed:", err);
+
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+      ? err
+      : JSON.stringify(err);
+
+  return NextResponse.json(
+    {
+      error: "Failed to generate station report",
+      details: message,
+    },
+    { status: 500 }
+  );
+}
 }

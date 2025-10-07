@@ -41,12 +41,18 @@ export async function GET(request: Request) {
     console.log('✅ Backend data received');
     
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('❌ API route error:', error);
+  }  catch (error : unknown) {
+    console.error('❌ CSV API route error:', error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+        ? error
+        : JSON.stringify(error);
     return NextResponse.json(
       { 
-        error: 'Failed to fetch trajectories',
-        details: error.message 
+        error: 'Failed to generate CSV report',
+        details: message 
       }, 
       { status: 500 }
     );
