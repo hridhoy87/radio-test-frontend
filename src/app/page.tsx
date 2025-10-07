@@ -166,13 +166,12 @@ export default function Home() {
       }}>
         <h1 style={{ margin: 0, color: '#333', fontSize: '1.5rem' }}>Radio Dashboard - Trajectory Map</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={generateReport} style={buttonStyle('#17a2b8')}>Download CSV</button>
           <button 
             onClick={() => setIsReportModalOpen(true)} 
             style={buttonStyle('#28a745')}
             disabled={reportGenerating}
           >
-            {reportGenerating ? 'Generating...' : 'Station Report'}
+            {reportGenerating ? 'Generating...' : 'Generate Report'}
           </button>
           {loading && <span style={{ color: '#666' }}>Loading...</span>}
           <button onClick={fetchTrajectories} style={buttonStyle('#007bff')} disabled={loading}>Refresh Data</button>
