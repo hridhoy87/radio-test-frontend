@@ -83,20 +83,20 @@ export default function Home() {
       const trajectoriesData = result.data || [];
       
       const transformedTrajectories = trajectoriesData.map((traj: any) => ({
-        id: `${traj.station}_${traj.device_id}`,
+        id: `${traj.station}-${traj.device_id}`,
         name: `Station: ${traj.station} | Device: ${traj.device_id}`,
         station: traj.station,
         device_id: traj.device_id,
         coordinates: traj.coordinates.map((coord: any) => ({
-          lat: coord.lat,
-          lng: coord.lng,
-          timestamp: coord.timestamp,
-          station: coord.station,
-          device_id: coord.device_id,
-          accuracy: coord.accuracy,
-          sample_date: coord.sample_date,
-          sample_time: coord.sample_time,
-          captured_at_utc: coord.captured_at_utc
+        lat: coord.lat,
+        lng: coord.lng,
+        timestamp: coord.timestamp,
+        station: coord.station,
+        device_id: coord.device_id,
+        accuracy: coord.accuracy,
+        sample_date: coord.sample_date,
+        sample_time: coord.sample_time,
+        captured_at_utc: coord.captured_at_utc
         }))
       }));
       
