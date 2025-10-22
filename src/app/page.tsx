@@ -108,7 +108,8 @@ export default function Home() {
         accuracy: coord.accuracy,
         sample_date: coord.sample_date,
         sample_time: coord.sample_time,
-        captured_at_utc: coord.captured_at_utc
+        captured_at_utc: coord.captured_at_utc,
+        comm_state: coord.comm_state
         }))
       }));
       
