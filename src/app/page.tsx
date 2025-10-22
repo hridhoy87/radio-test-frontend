@@ -29,6 +29,7 @@ interface Coordinate {
   timestamp?: string;
   station?: string;
   device_id?: string;
+  comm_state?: string;
   accuracy?: number;
   sample_date?: string;
   sample_time?: string;
@@ -46,9 +47,20 @@ interface Trajectory {
 // Color palette for stations
 const STATION_COLORS = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#008000', '#FFC0CB'];
 
+const COMM_STATE_COLORS = {
+  'Loud and Clear': '#006400',    // Deep Green
+  'Readable Noisy': '#90EE90',    // Light Green  
+  'Noisy': '#FFA500',             // Orange
+  'Nothing Heard': '#8B0000'      // Blood Red
+} as const;
+
 const getStationColor = (station: string): string => {
   const index = station.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % STATION_COLORS.length;
   return STATION_COLORS[index];
+};
+
+const getCommStateColor = (comm_state: string): string => {
+  return COMM_STATE_COLORS[comm_state as keyof typeof COMM_STATE_COLORS] || '#666666';
 };
 
 export default function Home() {
@@ -204,7 +216,17 @@ export default function Home() {
           ))}
         </div>
       )}
-
+      {trajectories.length > 0 && (
+        <div style={legendStyle1}>
+        <strong>Communication States:</strong>
+        {Object.entries(COMM_STATE_COLORS).map(([state, color]) => (
+          <div key={state} style={{ display: 'flex', alignItems: 'center', margin: '2px 0' }}>
+            <div style={{ ...colorDot, backgroundColor: color }}></div>
+            <span style={{ fontSize: '12px' }}>{state}</span>
+          </div>
+        ))}
+      </div>
+      )}
       {/* Map */}
       <MapContainer center={[defaultCenter.lat, defaultCenter.lng]} zoom={13} style={{ height: 'calc(100vh - 60px)', width: '100%' }} ref={mapRef}>
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -215,11 +237,15 @@ export default function Home() {
             <div key={trajectory.id}>
               <Polyline positions={getPathCoordinates(trajectory.coordinates)} color={stationColor} weight={4} opacity={0.7} />
               {trajectory.coordinates.map((coord, index) => (
-                <Marker key={`${trajectory.id}-${index}`} position={[coord.lat, coord.lng]} icon={createCustomIcon(stationColor)}>
+                <Marker 
+                  key={`${trajectory.id}-${index}`} 
+                  position={[coord.lat, coord.lng]} 
+                  icon={createCustomIcon(getCommStateColor(coord.comm_state || 'UNKNOWN'))}
+                >
                   <Popup>
                     <div style={{ minWidth: '200px' }}>
                       <strong style={{ color: stationColor }}>Station: {coord.station}</strong><br />
-                      <strong>Device: {coord.device_id}</strong><br />
+                      <strong>Comm State: {coord.comm_state}</strong><br />  {/* Changed from device_id */}
                       Point {index + 1} of {trajectory.coordinates.length}<br />
                       Lat: {coord.lat.toFixed(6)}, Lng: {coord.lng.toFixed(6)}<br />
                       Accuracy: {coord.accuracy?.toFixed(2)}m<br />
@@ -276,6 +302,19 @@ const noDataStyle = {
 const legendStyle = {
   position: 'absolute' as const,
   top: '70px',
+  right: '10px',
+  backgroundColor: 'white',
+  padding: '10px',
+  borderRadius: '5px',
+  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+  zIndex: 1000,
+  maxHeight: '200px',
+  overflowY: 'auto' as const
+};
+
+const legendStyle1 = {
+  position: 'absolute' as const,
+  bottom: '30px',
   right: '10px',
   backgroundColor: 'white',
   padding: '10px',
