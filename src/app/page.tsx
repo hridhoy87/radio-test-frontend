@@ -63,6 +63,13 @@ const getCommStateColor = (comm_state: string): string => {
   return COMM_STATE_COLORS[comm_state as keyof typeof COMM_STATE_COLORS] || '#666666';
 };
 
+const formatDateLocal = (d = new Date()) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Home() {
   const [trajectories, setTrajectories] = useState<Trajectory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,21 +81,24 @@ export default function Home() {
   const mapRef = useRef<any>(null);
   const defaultCenter = { lat: 23.6850, lng: 90.3563 };
 
+  const [selectedDate, setSelectedDate] = useState<string>(formatDateLocal());
+
   useEffect(() => {
     setIsClient(true);
-    fetchTrajectories();
+    fetchTrajectories(selectedDate);
   }, []);
   
   const stations = Array.from(new Set(trajectories.map(t => t.station)))
     .filter(station => station && station.trim() !== '') // Filter out empty/null stations
     .sort();
 
-  const fetchTrajectories = async () => {
+  const fetchTrajectories = async (date: string = selectedDate) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/trajectories');
+      // Add date parameter to the API call
+      const response = await fetch(`/api/trajectories?date_filter=${date}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const result = await response.json();
@@ -100,16 +110,16 @@ export default function Home() {
         station: traj.station,
         device_id: traj.device_id,
         coordinates: traj.coordinates.map((coord: any) => ({
-        lat: coord.lat,
-        lng: coord.lng,
-        timestamp: coord.timestamp,
-        station: coord.station,
-        device_id: coord.device_id,
-        accuracy: coord.accuracy,
-        sample_date: coord.sample_date,
-        sample_time: coord.sample_time,
-        captured_at_utc: coord.captured_at_utc,
-        comm_state: coord.comm_state
+          lat: coord.lat,
+          lng: coord.lng,
+          timestamp: coord.timestamp,
+          station: coord.station,
+          device_id: coord.device_id,
+          accuracy: coord.accuracy,
+          sample_date: coord.sample_date,
+          sample_time: coord.sample_time,
+          captured_at_utc: coord.captured_at_utc,
+          comm_state: coord.comm_state
         }))
       }));
       
@@ -119,6 +129,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate);
+    fetchTrajectories(newDate);
   };
 
   const generateReport = async () => {
@@ -179,6 +194,26 @@ export default function Home() {
       }}>
         <h1 style={{ margin: 0, color: '#333', fontSize: '1.5rem' }}>Radio Dashboard - Trajectory Map</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Date Picker */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <label htmlFor="date-picker" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+              Select Date:
+            </label>
+            <input
+              id="date-picker"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              style={{
+                padding: '6px 10px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              max={formatDateLocal()} // Don't allow future dates
+            />
+          </div>
+
           <button 
             onClick={() => setIsReportModalOpen(true)} 
             style={buttonStyle('#28a745')}
@@ -187,7 +222,9 @@ export default function Home() {
             {reportGenerating ? 'Generating...' : 'Generate Report'}
           </button>
           {loading && <span style={{ color: '#666' }}>Loading...</span>}
-          <button onClick={fetchTrajectories} style={buttonStyle('#007bff')} disabled={loading}>Refresh Data</button>
+          <button onClick={() => fetchTrajectories(selectedDate)} style={buttonStyle('#007bff')} disabled={loading}>
+            Refresh Data
+          </button>
         </div>
       </div>
 
@@ -201,7 +238,7 @@ export default function Home() {
       {/* No Data Message */}
       {!loading && trajectories.length === 0 && !error && (
         <div style={noDataStyle}>
-          No trajectory data found. Try clicking "Refresh Data".
+          No trajectory data found for {selectedDate}. Try selecting a different date or clicking "Refresh Data".
         </div>
       )}
 
